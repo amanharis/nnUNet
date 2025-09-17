@@ -4,7 +4,7 @@ import warnings
 
 from copy import deepcopy
 from functools import lru_cache, partial
-from typing import Union, Tuple, List, Type, Callable
+from typing import Union, Tuple, List, Type, Callable, Optional
 
 import numpy as np
 import torch
@@ -122,6 +122,12 @@ class ConfigurationManager(object):
     @property
     def patch_size(self) -> List[int]:
         return self.configuration['patch_size']
+
+    @property
+    def loss_label_weights(self) -> Optional[torch.Tensor]:
+        if 'loss_label_weights' not in self.configuration.keys():
+            return None
+        return torch.tensor(self.configuration['loss_label_weights'], dtype=torch.float32)
 
     @property
     def median_image_size_in_voxels(self) -> List[int]:
@@ -330,9 +336,11 @@ if __name__ == '__main__':
     from nnunetv2.utilities.dataset_name_id_conversion import maybe_convert_to_dataset_name
 
     plans = load_json(join(nnUNet_preprocessed, maybe_convert_to_dataset_name(3), 'nnUNetPlans.json'))
+
     # build new configuration that inherits from 3d_fullres
     plans['configurations']['3d_fullres_bs4'] = {
         'batch_size': 4,
+        'loss_label_weights': [0.5, 0.5],
         'inherits_from': '3d_fullres'
     }
     # now get plans and configuration managers
